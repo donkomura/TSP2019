@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="author" content="TSP実験 TAページ">
+<LINK rev="MADE" href="mailto:a@a">
+<LINK rel="INDEX" href="./index.html">
+<title>TSP実験 TAページ</title>
+
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css">
+<!--
+h2 { 
+  color: white;
+  background-color: green; 
+}
+h3 {
+  color: white;
+  background-color: green;
+}
+-->
+</style>
+
+</head>
+
+<body>
+
+<h2>TSP実験 TAページ</h2>
+<p>最終更新 2019.04.16</p>
+<p align="right">担当TA: <b>松﨑 功也</b> <br/> matsuzaki@syou.cs.tsukuba.ac.jp</p>
+<hr>
+
+<h3>実験概要</h3>
+<p>
+巡回セールスマン問題を解かせるヒューリスティクスを実装します．
+実験の最後には各自に作成してもらったヒューリスティクスについて簡単なプレゼンを行なってもらいます．<br/>
+(ヒューリスティクスの速度や精度だけでなく｢アイデアの面白さ｣，｢プレゼンの上手さ｣なども評価されます．)
+</p>
+
+<h3>実装の環境</h3>
+<p>
+言語はC(C++)言語を使用し，問題入力・解答出力を除いたアルゴリズム本体のみを作成します．
+こちらで用意した<a href = "tspShow.c">tspShow.c</a>とリンクさせてコンパイルしてください．
+</p>
+<h4>コンパイル</h4>
+<ul><li>
+<a href = "enumTsp.c">enumTsp.c</a>の形式にそったプログラミングソースを用意します．
+</li><li>
+ヒューリスティクスごとにファイル名を変えるとよいと思います．enumTsp.cは上書きせず残しておくことをおすすめします．
+</li><li>
+<a href = "tspShow.c">tspShow.c</a>とリンクさせてコンパイルを行います．
+X11のライブラリを使用しているので，オプションで指定します．
+</li></ul>
+<p align="center">
+例: gcc -O2 -I/usr/include/X11/ -L/usr/lib/ -lX11 -lm
+tspShow.c <i>inputFileName.c</i> -o <i>outputFileName</i></p>
+<ul><li>
+3C113のMacマシンでコンパイルを行う場合は，以下のようにしてください．
+</li></ul>
+<p align="center">
+例: gcc -O2 -I/usr/include/X11/ -L/usr/lib/ <font color="Red">-L/usr/X11R6/lib</font> -lX11 -lm
+tspShow.c <i>inputFileName.c</i> -o <i>outputFileName</i></p>
+<ul><li>
+alias や makefile を利用することで入力が楽になるので，各自調べるか，その都度相談してください．
+</li><li>
+<a href = "tspShow.c">tspShow.c</a>には順回路表示用の機能も入っているので，
+アルゴリズムのテストやデバッグに活用してください．
+</li><li>
+C++を使用する場合や環境によっては細かい違いが出てくると思うので，各自対応してください．相談は受付けます．
+</li></ul>
+
+<h3>作成したプログラムの実行</h3>
+<p>
+<a href = "tspShow.c">tspShow.c</a>とリンクさせて作成したプログラムは，
+以下のように実行することができます．
+（説明の簡易化のため実行ファイルを<i>enumTSP</i>と名付けて，カレントディレクトリ上に置いてあるとします．）
+</p>
+
+<p>
+&nbsp &nbsp ./enumTsp <i>Option</i> <i>FileName</i>
+</p>
+
+<h4>InputFile</h4>
+<h4>"<i>FileName</i>" :</h4>
+<p> &nbsp &nbsp
+巡回セールスマン問題の都市データを読み込みます．"<i>FileName</i>"も"-r"指定しない時，標準入力からファイルを読み込みます．読み込める都市データのファイルは以下の形式のものです．
+</p>
+<ol><li>
+<a href="http://www.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/">TSPLIB</a>
+にある拡張子.tspのファイルのうち2次元座標のデータ．(<b>./libにある拡張子.tspのファイルがそれです．それぞれの問題の<a href="https://www.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/STSP.html">最短距離</a>も確認してみてください．</b>)
+</li><li>
+1行目に都市数．2行目に以降にスペース分けで都市のx, y座標を入力したデータ．
+データ例として，<a href = "testDataTsp">testDataTsp</a>をのせておきます．
+</li></ol>
+
+<h4>Input Options</h4>
+<h4>"-r <i>number</i>" :</h4>
+<p> &nbsp &nbsp
+<i>number</i>を都市数として，入力する都市データをランダムに作成します．
+"<i>FileName</i>"が指定されている時無視されます．
+</p>
+
+<h4>"-s <i>number</i>" :</h4>
+<p> &nbsp &nbsp
+<i>number</i>を"-r"で使用するランダムシードとします．
+</p>
+
+<h4>Output Options</h4>
+<h4>"-c" :</h4>
+<p> &nbsp &nbsp
+都市データを標準出力に出力します．(2番めの形式)
+</p>
+
+<h4>"-t" :</h4>
+<p> &nbsp &nbsp
+順回路データを標準出力に出力します．
+都市番号をスペース区切りで出力．
+</p>
+
+<h4>Graphics Options</h4>
+<h4>"-n" :</h4>
+<p> &nbsp &nbsp
+グラフィクス表示を無視します．(<b>実行速度を測定する場合や大規模な問題を解くときにはこのオプションを指定してください．実行が早くなります．</b>)
+</p>
+
+<h4>"-a" :</h4>
+<p> &nbsp &nbsp
+グラフィクス表示のアスペクト比を無視し，画面全体に広げてしまいます．
+</p>
+
+<h4>"-w <i>number</i>" :</h4>
+<p> &nbsp &nbsp
+ウェイト時間のパーセンテージを<i>number</i>に指定します．
+</p>
+
+</body>
+</html>
