@@ -8,8 +8,8 @@
 
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
-#define MAX_N 16
-#define INF 9999
+#define MAX_N 29
+#define INF 99999
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -29,6 +29,7 @@ extern void showString(char *str);
 extern void showLength(int leng);
 /// ###
 
+// buffer
 int tr[MAX];
 /// 距離の計算はこの関数と同等の方法で行う．
 /// 必ずしもこの関数を残しておく必要は無い．
@@ -54,66 +55,6 @@ int cost_evaluate() {
   return sum;
 }
 
-void perm(int i) {
-  int j, tmp;
-  int cost;
-
-  if (i < n - 2) {
-    perm(i + 1);
-    for (j = i + 1; j < n - 1; j++) {
-      tmp = tr[i];
-      tr[i] = tr[j];
-      tr[j] = tmp;
-      perm(i + 1);
-      tmp = tr[i];
-      tr[i] = tr[j];
-      tr[j] = tmp;
-    }
-  } else {
-    cost = cost_evaluate();
-    if (cost < length) {
-      length = cost;
-      for (j = 0; j < n; j++)
-        tour[j] = tr[j];
-
-      /// テスト等のために順回路等の表示機能が使える．
-      showLength(length);
-      showString("KOUSHIN!");
-      showTour(tr, 1000, 1);
-      showString("TANSAKU");
-    } else {
-      showTour(tr, 10, 0);
-    }
-  }
-}
-
-
-// int min_idx(int s) {
-//   int mi = INF, j = 0;
-//   for (int i = 0; i < n; i++) {
-//     if (i != s && mi > Dis(s, i)) {
-//       mi = Dis(s, i);
-//       j = i;
-//     }
-//   }
-//   return j;
-// }
-
-// vector<int> getPath() {
-//   int s = n-1;
-//   int v = min_idx(s);
-//   vector<int> path{s, v};
-//   int S = (1 << v);
-//   while (path.size() < n) {
-//     int u = dist[v][S];
-//     printf("(v, u) = (%d, %d)\n", v, u);
-//     path.push_back(u);
-//     v = u;
-//     S |= 1 << v;
-//   }
-//   return path;
-// }
-//
 vector<vector<int> > dp(MAX_N, vector<int>(1<<MAX_N, INF));
 vector<vector<int> > dist(MAX_N, vector<int>(1<<MAX_N, -1));
 
@@ -139,10 +80,10 @@ int tsp(int s) {
   return dp[s][(1<<n)-1];
 }
 
-void restore(vector<vector<int> >& a, int i, int S, vector<int> &res) {
+void restore(int i, int S, vector<int> &res) {
   if (S != 0) {
     // remove i from S
-    restore(a, a[i][S], S & ~(1 << i), res);
+    restore(dist[i][S], S & ~(1 << i), res);
   }
   res.push_back(i);
   return;
@@ -152,9 +93,9 @@ int tspSolver(void) {
   for (int i = 0; i < n; i++) {
     tr[i] = i;
   }
-  length = tsp(n-1);
   vector<int> path;
-  restore(dist, n-1, (1 << n)-1, path);
+  length = tsp(n-1);
+  restore(n-1, (1 << n)-1, path);
   for (int i = 0; i < n; i++) {
     tour[i] = tr[i] = path[i];
     cout << tour[i] << (i != n - 1 ? " " : "\n");
