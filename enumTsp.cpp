@@ -8,7 +8,7 @@
 
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
-#define INF 9999
+#define INF 99999999
 #define MAX_ITR 300
 #define TEMP_INIT 100
 
@@ -92,16 +92,20 @@ void perm(int i) {
   }
 }
 
-void init_array() {
-  for (int i = 0; i < n; i++) {
-    tr[i] = tour[i] = i;
-  }
-}
-
-void swap(int *a, int i, int j) {
+void swap_arr(int *a, int i, int j) {
   int tmp = a[i];
   a[i] = a[j];
   a[j] = tmp;
+}
+
+void init_array() {
+  for (int i = 0; i < n; i++) {
+    tr[i] = i;
+  }
+  for (int i = 0; i < n; i++) {
+    int j = rand() % n;
+    swap_arr(tr, i, j);
+  }
 }
 
 int swap_cost(int i, int j) {
@@ -121,28 +125,31 @@ double search_probability(double c) {
 
 void reverse(int i, int j) {
   for (int k = 0; k < (j-i) / 2; k++) {
-    swap(tr, (i+1+k)%n, (j-k)%n);
+    swap_arr(tr, (i+1+k)%n, (j-k)%n);
   }
 }
 
 void tsp() {
   bool flag = true;
+  int s = 0;
   int mi_cost = INF;
   while (flag && itr++ < MAX_ITR) {
     flag = false;
-    for (int i = 0; i < n-2; i++) {
-      for (int j = i+2; j < n; j++) {
+    for (int i = s; i < s+n; i++) {
+      for (int j = i+2; j < i + n - 1; j++) {
         int cost = swap_cost(i, j);
         if (cost < 0) {
-          swap(tr, i, j);
+          reverse(i, j);
+          s = (i+1) % n;
           flag = true;
           break;
         } else {
           double prob = search_probability((double)cost);
           if (((double)rand()/RAND_MAX) <= prob) {
-            printf("probability: %.10f\n", prob);
-            printf("rand: %.10f\n", (double)rand()/RAND_MAX);
-            swap(tr, i, j);
+//            printf("probability: %.10f\n", prob);
+//            printf("rand: %.10f\n", (double)rand()/RAND_MAX);
+            reverse(i, j);
+            s = (i + 1) % n;
             flag = true;
             break;
           }
@@ -159,14 +166,13 @@ void tsp() {
       }
     }
     
-    printf("temp: %.10f\n", temp);
+//    printf("temp: %.10f\n", temp);
     printf("itr: %d\n", itr);
     for (int i = 0; i < n; i++) {
       printf("%d ", tr[i]);
     }
     printf("\n");
-    cout << cost_evaluate() << endl;
-    showTour(tr, 10, 0);
+    cout << mi_cost << endl;
   }
 }
 
