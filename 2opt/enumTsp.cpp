@@ -8,6 +8,7 @@
 
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
+#define INF 9999
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -87,10 +88,10 @@ void perm(int i) {
   }
 }
 
-void swap(int i, int j) {
-  int tmp = tour[i];
-  tour[i] = tour[j];
-  tour[j] = tmp;
+void swap(int *a, int i, int j) {
+  int tmp = a[i];
+  a[i] = a[j];
+  a[j] = tmp;
 }
 
 int Next(int cur) {
@@ -109,7 +110,7 @@ void Flip(int a, int b, int c, int d) {
     if (tour[f] == d) l = f;
   }
   for (int f = 0; f < (k - j) / 2; f++) {
-    swap(f, (k-j)-f-1);
+    swap(tour, f, (k-j)-f-1);
   }
   return;
 }
@@ -134,35 +135,32 @@ void two_opt() {
   }
 }
 
-void rev(int *b, int *e) {
-  while (b < e) {
-    int t = *b;
-    *b++ = *e;
-    *e-- = t;
-  }
-}
-
 void tsp() {
+  int s = 0;
   bool flag = true;
   while (flag) {
     flag = false;
-    for (int i = 0; i < n-2; i++) {
-      for (int j = i+2; j < n; j++) {
-        if (Dis(i, i+1) + Dis(j, j+1) > Dis(i, j) + Dis(i+1, j+1)) {
-          rev(&tour[i+1], &tour[j]);
-          rev(&tr[i+1], &tr[j]);
+    for (int i = s; i < s+n; i++) {
+      for (int j = i+2; j < i+n-1; j++) {
+        if (Dis(tour[i%n], tour[(i+1)%n]) + Dis(tour[j%n], tour[(j+1)%n]) 
+            > Dis(tour[i%n], tour[j%n]) + Dis(tour[(i+1)%n], tour[(j+1)%n])) {
+          for (int k = 0; k < (j-i) / 2; k++) {
+            swap(tour, (i+1+k)%n, (j-k)%n);
+            swap(tr, (i+1+k)%n, (j-k)%n);
+          }
+          s = (i+1)%n;
           flag = true;
+          break;
         }
       }
+      if (flag) break;
     }
 
     for (int i = 0; i < n; i++) {
       printf("%d ", tour[i]);
     }
     printf("\n");
-    showLength(length);
-    length = cost_evaluate();
-    cout << length << endl;
+    cout << cost_evaluate() << endl;
     showTour(tr, 10, 0);
   }
 }
@@ -172,7 +170,7 @@ int tspSolver(void) {
     tour[i] = i;
     tr[i] = i;
   }
-  two_opt();
+  tsp();
   length = cost_evaluate();
   for (int i = 0; i < n; i++) {
     printf("%d ", tour[i]);
