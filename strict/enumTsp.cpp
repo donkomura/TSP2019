@@ -8,6 +8,8 @@
 
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
+#define MAX_N 16
+#define INF 9999
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -28,8 +30,6 @@ extern void showLength(int leng);
 /// ###
 
 int tr[MAX];
-int head[MAX], adj[MAX];
-
 /// 距離の計算はこの関数と同等の方法で行う．
 /// 必ずしもこの関数を残しておく必要は無い．
 int Dis(int i, int j) {
@@ -87,97 +87,78 @@ void perm(int i) {
   }
 }
 
-void swap(int i, int j) {
-  int tmp = tour[i];
-  tour[i] = tour[j];
-  tour[j] = tmp;
-}
 
-int Next(int cur) {
-  if (cur == n-1) {
-    return tour[0];
-  } 
-  return tour[cur+1];
-}
+// int min_idx(int s) {
+//   int mi = INF, j = 0;
+//   for (int i = 0; i < n; i++) {
+//     if (i != s && mi > Dis(s, i)) {
+//       mi = Dis(s, i);
+//       j = i;
+//     }
+//   }
+//   return j;
+// }
 
-void Flip(int a, int b, int c, int d) {
-  int i, j, k, l;
-  for (int f = 0; f < n; f++) {
-    if (tour[f] == a) i = f;
-    if (tour[f] == b) j = f;
-    if (tour[f] == c) k = f;
-    if (tour[f] == d) l = f;
-  }
-  for (int f = 0; f < (k - j) / 2; f++) {
-    swap(f, (k-j)-f-1);
-  }
-  return;
-}
+// vector<int> getPath() {
+//   int s = n-1;
+//   int v = min_idx(s);
+//   vector<int> path{s, v};
+//   int S = (1 << v);
+//   while (path.size() < n) {
+//     int u = dist[v][S];
+//     printf("(v, u) = (%d, %d)\n", v, u);
+//     path.push_back(u);
+//     v = u;
+//     S |= 1 << v;
+//   }
+//   return path;
+// }
+//
+vector<vector<int> > dp(MAX_N, vector<int>(1<<MAX_N, INF));
+vector<vector<int> > dist(MAX_N, vector<int>(1<<MAX_N, -1));
 
-void two_opt() {
-  int a, b, c, d;
-  bool flag = false;
+int tsp(int s) {
+  cout << s << endl;
   for (int i = 0; i < n; i++) {
-    a = tour[i];
-    b = Next(a);
-    for (int j = head[a]; j < head[a+1]; j++) {
-      c = adj[j];
-      if (b == c) break;
-      d = Next(c);
-      if (Dis(a, b) > Dis(a, c) && Dis(c, d) > Dis(b, d)) {
-        length -= Dis(a, b) + Dis(c, d) - Dis(a, c) - Dis(b, d);
-        Flip(a, b, c, d);
-        flag = true;
-      }
-    }
-    if (flag) continue;
+    dp[i][1 << i] = Dis(s, i);
+    dist[i][1 << i] = s;
   }
-}
-
-void rev(int *b, int *e) {
-  while (b < e) {
-    int t = *b;
-    *b++ = *e;
-    *e-- = t;
-  }
-}
-
-void tsp() {
-  bool flag = true;
-  while (flag) {
-    flag = false;
-    for (int i = 0; i < n-2; i++) {
-      for (int j = i+2; j < n; j++) {
-        if (Dis(i, i+1) + Dis(j, j+1) > Dis(i, j) + Dis(i+1, j+1)) {
-          rev(&tour[i+1], &tour[j]);
-          rev(&tr[i+1], &tr[j]);
-          flag = true;
+  for (int S = 1; S < 1 << n; S++) {
+    for (int i = 0; i < n; i++) {
+      if (!((1 << i) & S)) continue;
+      for (int j = 0; j < n; j++) {
+        if ((1 << j) & S) continue; 
+        int tmp = dp[i][S] + Dis(i, j);
+        if (tmp < dp[j][(S | (1 << j))]) {
+          dp[j][(S | (1 << j))] = tmp;
+          dist[j][(S | (1 << j))] = i;
         }
       }
     }
-
-    for (int i = 0; i < n; i++) {
-      printf("%d ", tour[i]);
-    }
-    printf("\n");
-    showLength(length);
-    length = cost_evaluate();
-    cout << length << endl;
-    showTour(tr, 10, 0);
   }
+  return dp[s][(1<<n)-1];
+}
+
+void restore(vector<vector<int> >& a, int i, int S, vector<int> &res) {
+  if (S != 0) {
+    // remove i from S
+    restore(a, a[i][S], S & ~(1 << i), res);
+  }
+  res.push_back(i);
+  return;
 }
 
 int tspSolver(void) {
-  for (int i = 0;i < n; i++) {
-    tour[i] = i;
+  for (int i = 0; i < n; i++) {
     tr[i] = i;
   }
-  two_opt();
-  length = cost_evaluate();
+  length = tsp(n-1);
+  vector<int> path;
+  restore(dist, n-1, (1 << n)-1, path);
   for (int i = 0; i < n; i++) {
-    printf("%d ", tour[i]);
+    tour[i] = tr[i] = path[i];
+    cout << tour[i] << (i != n - 1 ? " " : "\n");
   }
-  printf("\n");
-
+  printf("length: %d\nevaluate: %d\n", length, cost_evaluate());
   return 1;
 }

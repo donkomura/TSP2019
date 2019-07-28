@@ -12,3 +12,4 @@ origin: origin/tspShow.c origin/enumTsp.c
 
 debug: tspShow.cpp
 	$(CC) -O2 -std=c++11 -g $(OPTIONS) $^ $(OPTIONS) enumTsp.cpp -o enumTsp
+
