@@ -9,7 +9,8 @@
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
 #define INF 9999
-#define MAX_ITR 400
+#define MAX_ITR 300
+#define TEMP_INIT 100
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -91,6 +92,12 @@ void perm(int i) {
   }
 }
 
+void init_array() {
+  for (int i = 0; i < n; i++) {
+    tr[i] = tour[i] = i;
+  }
+}
+
 void swap(int *a, int i, int j) {
   int tmp = a[i];
   a[i] = a[j];
@@ -98,34 +105,36 @@ void swap(int *a, int i, int j) {
 }
 
 int swap_cost(int i, int j) {
-  return Dis(tour[i%n], tour[(i+1)%n]) \
-    + Dis(tour[j%n], tour[(j+1)%n]) \
-    - Dis(tour[i%n], tour[j%n]) \
-    - Dis(tour[(i+1)%n], tour[(j+1)%n]);
+  return Dis(tour[i%n], tour[j%n]) \
+    + Dis(tour[(i+1)%n], tour[(j+1)%n]) \
+    -Dis(tour[i%n], tour[(i+1)%n]) \
+    - Dis(tour[j%n], tour[(j+1)%n]);
 }
 
-double getTemplature(double itr) {
-  return 100 - pow(100, itr / MAX_ITR);
+double getTemplature(double t) {
+  return 0.95 * t;
 }
 
 double search_probability(double c) {
-  return exp(-temp/c) - 1;
+  return exp(-c / temp) - 1;
+}
+
+void reverse(int i, int j) {
+  for (int k = 0; k < (j-i) / 2; k++) {
+    swap(tr, (i+1+k)%n, (j-k)%n);
+  }
 }
 
 void tsp() {
-  int s = 0;
   bool flag = true;
   int mi_cost = INF;
   while (flag && itr++ < MAX_ITR) {
     flag = false;
-    for (int i = s; i < s+n; i++) {
-      for (int j = i+2; j < i+n-1; j++) {
+    for (int i = 0; i < n-2; i++) {
+      for (int j = i+2; j < n; j++) {
         int cost = swap_cost(i, j);
-        if (cost > 0) {
-          for (int k = 0; k < (j-i) / 2; k++) {
-            swap(tr, (i+1+k)%n, (j-k)%n);
-          }
-          s = (i+1)%n;
+        if (cost < 0) {
+          swap(tr, i, j);
           flag = true;
           break;
         } else {
@@ -133,10 +142,7 @@ void tsp() {
           if (((double)rand()/RAND_MAX) <= prob) {
             printf("probability: %.10f\n", prob);
             printf("rand: %.10f\n", (double)rand()/RAND_MAX);
-            for (int k = 0; k < (j-i) / 2; k++) {
-              swap(tr, (i+1+k)%n, (j-k)%n);
-            }
-            s = (i+1)%n;
+            swap(tr, i, j);
             flag = true;
             break;
           }
@@ -144,7 +150,7 @@ void tsp() {
       }
       if (flag) break;
     }
-    temp = getTemplature(itr);
+    temp = getTemplature(temp);
 
     if (cost_evaluate() < mi_cost) {
       mi_cost = cost_evaluate();
@@ -165,11 +171,8 @@ void tsp() {
 }
 
 int tspSolver(void) {
-  for (int i = 0;i < n; i++) {
-    tour[i] = i;
-    tr[i] = i;
-  }
-  temp = 100;
+  init_array();
+  temp = TEMP_INIT;
   itr = 0;
   tsp();
   length = cost_evaluate();
