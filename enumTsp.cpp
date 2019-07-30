@@ -9,8 +9,8 @@
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
 #define INF 99999999
-#define MAX_ITR 300
 #define TEMP_INIT 100
+#define EXEC_TIME 5
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -33,7 +33,7 @@ extern void showLength(int leng);
 int tr[MAX];
 int head[MAX], adj[MAX];
 double temp;
-int itr;
+clock_t start_t, end_t, current_t;
 
 /// 距離の計算はこの関数と同等の方法で行う．
 /// 必ずしもこの関数を残しておく必要は無い．
@@ -57,39 +57,6 @@ int cost_evaluate() {
   }
 
   return sum;
-}
-
-void perm(int i) {
-  int j, tmp;
-  int cost;
-
-  if (i < n - 2) {
-    perm(i + 1);
-    for (j = i + 1; j < n - 1; j++) {
-      tmp = tr[i];
-      tr[i] = tr[j];
-      tr[j] = tmp;
-      perm(i + 1);
-      tmp = tr[i];
-      tr[i] = tr[j];
-      tr[j] = tmp;
-    }
-  } else {
-    cost = cost_evaluate();
-    if (cost < length) {
-      length = cost;
-      for (j = 0; j < n; j++)
-        tour[j] = tr[j];
-
-      /// テスト等のために順回路等の表示機能が使える．
-      showLength(length);
-      showString("KOUSHIN!");
-      showTour(tr, 1000, 1);
-      showString("TANSAKU");
-    } else {
-      showTour(tr, 10, 0);
-    }
-  }
 }
 
 void swap_arr(int *a, int i, int j) {
@@ -133,7 +100,7 @@ void tsp() {
   bool flag = true;
   int s = 0;
   int mi_cost = INF;
-  while (flag && itr++ < MAX_ITR) {
+  while (flag && (double)(current_t - start_t) / CLOCKS_PER_SEC < end_t) {
     flag = false;
     for (int i = s; i < s+n; i++) {
       for (int j = i+2; j < i + n - 1; j++) {
@@ -146,8 +113,8 @@ void tsp() {
         } else {
           double prob = search_probability((double)cost);
           if (((double)rand()/RAND_MAX) <= prob) {
-//            printf("probability: %.10f\n", prob);
-//            printf("rand: %.10f\n", (double)rand()/RAND_MAX);
+            printf("probability: %.10f\n", prob);
+            printf("rand: %.10f\n", (double)rand()/RAND_MAX);
             reverse(i, j);
             s = (i + 1) % n;
             flag = true;
@@ -166,26 +133,32 @@ void tsp() {
       }
     }
     
-//    printf("temp: %.10f\n", temp);
-    printf("itr: %d\n", itr);
+    printf("temp: %.10f\n", temp);
     for (int i = 0; i < n; i++) {
       printf("%d ", tr[i]);
     }
     printf("\n");
-    cout << mi_cost << endl;
+    showTour(tr, 10, 1);
+
+    current_t = clock();
   }
 }
 
 int tspSolver(void) {
   init_array();
   temp = TEMP_INIT;
-  itr = 0;
+  start_t = current_t = clock();
+  end_t = start_t / CLOCKS_PER_SEC + EXEC_TIME;
   tsp();
   length = cost_evaluate();
-  printf("length: %d\n", length);
+  printf("result:\n");
   for (int i = 0; i < n; i++) {
     printf("%d ", tour[i]);
   }
+  printf("\n");
+
+  printf("length: %d\n", length);
+  printf("N : %d\n", n);
   printf("\n");
 
   return 1;

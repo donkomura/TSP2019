@@ -29,7 +29,6 @@ extern void showLength(int leng);
 /// ###
 
 int tr[MAX];
-int head[MAX], adj[MAX];
 
 /// 距離の計算はこの関数と同等の方法で行う．
 /// 必ずしもこの関数を残しておく必要は無い．
@@ -55,99 +54,47 @@ int cost_evaluate() {
   return sum;
 }
 
-void perm(int i) {
-  int j, tmp;
-  int cost;
-
-  if (i < n - 2) {
-    perm(i + 1);
-    for (j = i + 1; j < n - 1; j++) {
-      tmp = tr[i];
-      tr[i] = tr[j];
-      tr[j] = tmp;
-      perm(i + 1);
-      tmp = tr[i];
-      tr[i] = tr[j];
-      tr[j] = tmp;
-    }
-  } else {
-    cost = cost_evaluate();
-    if (cost < length) {
-      length = cost;
-      for (j = 0; j < n; j++)
-        tour[j] = tr[j];
-
-      /// テスト等のために順回路等の表示機能が使える．
-      showLength(length);
-      showString("KOUSHIN!");
-      showTour(tr, 1000, 1);
-      showString("TANSAKU");
-    } else {
-      showTour(tr, 10, 0);
-    }
-  }
-}
-
 void swap(int *a, int i, int j) {
   int tmp = a[i];
   a[i] = a[j];
   a[j] = tmp;
 }
 
-int Next(int cur) {
-  if (cur == n-1) {
-    return tour[0];
-  } 
-  return tour[cur+1];
+bool isDecline(int i, int j) {
+  if (Dis(tour[i%n], tour[(i+1)%n]) \
+    + Dis(tour[j%n], tour[(j+1)%n]) \
+    - Dis(tour[i%n], tour[j%n]) \
+    - Dis(tour[(i+1)%n], tour[(j+1)%n])
+    > 0) {
+    return true;
+  }
+  return false;
 }
 
-void Flip(int a, int b, int c, int d) {
-  int i, j, k, l;
-  for (int f = 0; f < n; f++) {
-    if (tour[f] == a) i = f;
-    if (tour[f] == b) j = f;
-    if (tour[f] == c) k = f;
-    if (tour[f] == d) l = f;
+void reverse(int i, int j) {
+  for (int k = 0; k < (j-i) / 2; k++) {
+    swap(tour, (i+1+k)%n, (j-k)%n);
+    swap(tr, (i+1+k)%n, (j-k)%n);
   }
-  for (int f = 0; f < (k - j) / 2; f++) {
-    swap(tour, f, (k-j)-f-1);
-  }
-  return;
 }
 
-void two_opt() {
-  int a, b, c, d;
-  bool flag = false;
+void log_tour() {
   for (int i = 0; i < n; i++) {
-    a = tour[i];
-    b = Next(a);
-    for (int j = head[a]; j < head[a+1]; j++) {
-      c = adj[j];
-      if (b == c) break;
-      d = Next(c);
-      if (Dis(a, b) > Dis(a, c) && Dis(c, d) > Dis(b, d)) {
-        length -= Dis(a, b) + Dis(c, d) - Dis(a, c) - Dis(b, d);
-        Flip(a, b, c, d);
-        flag = true;
-      }
-    }
-    if (flag) continue;
+    printf("%d ", tour[i]);
   }
+  printf("\n");
+  printf("cost: %d\n", cost_evaluate());
+  showTour(tr, 10, 0);
 }
 
-void tsp() {
-  int s = 0;
+void tsp(int s) {
   bool flag = true;
   while (flag) {
     flag = false;
     for (int i = s; i < s+n; i++) {
       for (int j = i+2; j < i+n-1; j++) {
-        if (Dis(tour[i%n], tour[(i+1)%n]) + Dis(tour[j%n], tour[(j+1)%n]) 
-            > Dis(tour[i%n], tour[j%n]) + Dis(tour[(i+1)%n], tour[(j+1)%n])) {
-          for (int k = 0; k < (j-i) / 2; k++) {
-            swap(tour, (i+1+k)%n, (j-k)%n);
-            swap(tr, (i+1+k)%n, (j-k)%n);
-          }
+        if (isDecline(i, j)) {
+          reverse(i, j);
           s = (i+1)%n;
           flag = true;
           break;
@@ -155,13 +102,7 @@ void tsp() {
       }
       if (flag) break;
     }
-
-    for (int i = 0; i < n; i++) {
-      printf("%d ", tour[i]);
-    }
-    printf("\n");
-    cout << cost_evaluate() << endl;
-    showTour(tr, 10, 0);
+    log_tour();
   }
 }
 
@@ -170,7 +111,7 @@ int tspSolver(void) {
     tour[i] = i;
     tr[i] = i;
   }
-  tsp();
+  tsp(0);
   length = cost_evaluate();
   for (int i = 0; i < n; i++) {
     printf("%d ", tour[i]);

@@ -1,15 +1,16 @@
 CC := g++
-OPTIONS := -I/usr/include/X11/ -L/usr/lib/ -lX11 -lm
+OPTIONS := -O2 -I/usr/include/X11/ -L/usr/lib/ -lX11 -lm
+VERSION := -std=c++14
 
 enumTsp: tspShow.cpp
-	$(CC) -O2 -std=c++11 $(OPTIONS) $^ $(OPTIONS) $@.cpp -o $@
+	$(CC) $(VERSION) $(OPTIONS) $^ $(OPTIONS) $@.cpp -o $@
 
 clean:
 	$(RM) enumTsp
 
 origin: origin/tspShow.c origin/enumTsp.c
-	gcc -O2 $(OPTIONS) origin/tspShow.c  $(OPTIONS) origin/enumTsp.c -o enumTsp_or
+	gcc $(OPTIONS) origin/tspShow.c  $(OPTIONS) origin/enumTsp.c -o enumTsp_or
 
 debug: tspShow.cpp
-	$(CC) -O2 -std=c++11 -g $(OPTIONS) $^ $(OPTIONS) enumTsp.cpp -o enumTsp
+	$(CC) $(VERSION) -g $(OPTIONS) $^ $(OPTIONS) enumTsp.cpp -o enumTsp
 

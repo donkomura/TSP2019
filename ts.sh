@@ -5,6 +5,7 @@ testData=$2
 
 if [ -z $dir ] || [ -z $testData ]; then
   echo "Usage: ./test [source_dir] [test_data]"
+  exit 1
 fi
 
 # compile
