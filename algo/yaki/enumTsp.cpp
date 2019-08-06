@@ -9,8 +9,12 @@
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
 #define INF 99999999
-#define TEMP_INIT 200
-#define EXEC_TIME 5
+#define TEMP_INIT 100
+#define TEMP_FACT 0.99
+#define TEMP_FIN 0.1
+#define MAX_ITR 200
+#define EXEC_TIME 10
+#define NGH_SIZE 5
 
 #include <bits/stdc++.h>
 #include <chrono>
@@ -69,44 +73,49 @@ void swap_arr(int *a, int i, int j) {
 void init_array() {
   for (int i = 0; i < n; i++) {
     tr[i] = i;
+    tour[i] = i;
   }
   for (int i = 0; i < n; i++) {
     int j = rand() % n;
     swap_arr(tr, i, j);
+    swap_arr(tour, i, j);
   }
 }
 
 int swap_cost(int i, int j) {
-  return Dis(tour[i%n], tour[j%n]) \
-    + Dis(tour[(i+1)%n], tour[(j+1)%n]) \
-    -Dis(tour[i%n], tour[(i+1)%n]) \
-    - Dis(tour[j%n], tour[(j+1)%n]);
+  return - Dis(tour[i%n], tour[(i+1)%n]) \
+         - Dis(tour[j%n], tour[(j+1)%n]) \
+         + Dis(tour[i%n], tour[j%n]) \
+         + Dis(tour[(i+1)%n], tour[(j+1)%n]);
 }
 
-double getTemplature(double t) {
-  return 0.95 * t;
+double getTemplature(double r) {
+  return TEMP_FACT * r;
 }
 
-double calc_probability(double c) {
-  return exp(- c / temp);
+double calc_probability(double c, double t) {
+  return exp(-c / t);
 }
 
 void reverse(int i, int j) {
   for (int k = 0; k < (j-i) / 2; k++) {
+    swap_arr(tour, (i+1+k)%n, (j-k)%n);
     swap_arr(tr, (i+1+k)%n, (j-k)%n);
   }
 }
 
 void log_tour() {
-  printf("temp: %-10.10f\n", temp);
+  printf("temp: %10f\n", temp);
   for (int i = 0; i < n; i++) {
     printf("%d ", tr[i]);
   }
   printf("\n");
+  printf("cost: %d\n", cost_evaluate());
   showTour(tr, 10, 1);
 }
 
-void log_prob(double prob, double rand) {
+void log_prob(int cost, double prob, double rand) {
+  printf("cost         %d\n", cost);
   printf("probability: %.10f\n", prob);
   printf("rand:        %.10f\n", rand);
 }
@@ -130,36 +139,39 @@ bool isInTime(clck st, clck nw) {
 
 void tsp(int s) {
   bool flag = true;
-  int mi_cost = INF;
+  int mi_cost = INF, cnt = 0;
   auto start_t = chrono::system_clock::now();
-  while (flag && isInTime(start_t, chrono::system_clock::now())) {
-    flag = false;
-    for (int i = s; i < s+n; i++) {
-      for (int j = i+2; j < i + n - 1; j++) {
-        int cost = swap_cost(i, j);
-        if (cost < 0) {
-          reverse(i, j);
-          s = (i+1) % n;
-          flag = true;
-          break;
-        } else {
-          double prob = calc_probability((double)cost);
-          double rd = (double)rand() / RAND_MAX;
-          if (prob >= rd) {
-            log_prob(prob, rd);
+  while (isInTime(start_t, chrono::system_clock::now()) && flag && temp > TEMP_FIN) {
+    for (int itr = 0; itr < MAX_ITR; itr++) {
+      flag = false;
+      for (int i = s; i < s+n; i++) {
+        for (int j = i+2; j < i+n-1; j++) {
+          if (++cnt < n * NGH_SIZE) {
+            cnt = 1;
+          }
+          int cost = swap_cost(i, j);
+          if (cost < 0) {
             reverse(i, j);
             s = (i+1) % n;
             flag = true;
             break;
+          } else {
+            double prob = calc_probability((double)cost, temp);
+            double rd = (double)rand() / RAND_MAX;
+            if (rd < prob) {
+              reverse(i, j);
+              s = (i+1) % n;
+              flag = true;
+              break;
+            }
           }
+          mi_cost = update(mi_cost);
         }
+        if (flag) break;
       }
-      if (flag) break;
     }
-    log_tour();
-    mi_cost = update(mi_cost);
-   
     temp = getTemplature(temp);
+//    log_tour();
   }
 }
 
@@ -167,18 +179,11 @@ int tspSolver(void) {
   init_array();
   temp = TEMP_INIT;
 
+  chrono::system_clock::time_point start, end; 
+  start = chrono::system_clock::now();
   tsp(0);
-
-  length = cost_evaluate();
-  printf("result:\n");
-  for (int i = 0; i < n; i++) {
-    printf("%d ", tour[i]);
-  }
-  printf("\n");
-
-  printf("length: %d\n", length);
-  printf("N : %d\n", n);
-  printf("\n");
+  end = chrono::system_clock::now();
+  printf("time: %lf[ms]\n", static_cast<double>(chrono::duration_cast<chrono::microseconds>(end - start).count())); 
 
   return 1;
 }

@@ -8,7 +8,7 @@
 
 /// 使用するグローバル変数等．必須項目
 #define MAX 20000
-#define MAX_N 29
+#define MAX_N 16
 #define INF 99999
 
 #include <bits/stdc++.h>

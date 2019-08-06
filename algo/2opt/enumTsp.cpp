@@ -11,6 +11,7 @@
 #define INF 9999
 
 #include <bits/stdc++.h>
+#include <chrono>
 using namespace std;
 
 extern int n, length, tour[MAX];
@@ -54,10 +55,22 @@ int cost_evaluate() {
   return sum;
 }
 
-void swap(int *a, int i, int j) {
+void swap_arr(int *a, int i, int j) {
   int tmp = a[i];
   a[i] = a[j];
   a[j] = tmp;
+}
+
+void init_array() {
+  for (int i = 0; i < n; i++) {
+    tr[i] = i;
+    tour[i] = i;
+  }
+//  for (int i = 0; i < n; i++) {
+//    int j = rand() % n;
+//    swap_arr(tr, i, j);
+//    swap_arr(tour, i, j);
+//  }
 }
 
 bool isDecline(int i, int j) {
@@ -73,8 +86,8 @@ bool isDecline(int i, int j) {
 
 void reverse(int i, int j) {
   for (int k = 0; k < (j-i) / 2; k++) {
-    swap(tour, (i+1+k)%n, (j-k)%n);
-    swap(tr, (i+1+k)%n, (j-k)%n);
+    swap_arr(tr, (i+1+k)%n, (j-k)%n);
+    swap_arr(tour, (i+1+k)%n, (j-k)%n);
   }
 }
 
@@ -84,7 +97,7 @@ void log_tour() {
   }
   printf("\n");
   printf("cost: %d\n", cost_evaluate());
-  showTour(tr, 10, 0);
+  showTour(tour, 10, 0);
 }
 
 void tsp(int s) {
@@ -102,21 +115,16 @@ void tsp(int s) {
       }
       if (flag) break;
     }
-    log_tour();
+//    log_tour();
   }
 }
 
 int tspSolver(void) {
-  for (int i = 0;i < n; i++) {
-    tour[i] = i;
-    tr[i] = i;
-  }
+  init_array();
+  chrono::system_clock::time_point start, end;
+  start = chrono::system_clock::now();
   tsp(0);
-  length = cost_evaluate();
-  for (int i = 0; i < n; i++) {
-    printf("%d ", tour[i]);
-  }
-  printf("\n");
-
+  end = chrono::system_clock::now();
+  printf("time: %lf[ms]\n", static_cast<double>(chrono::duration_cast<chrono::microseconds>(end - start).count()));
   return 1;
 }

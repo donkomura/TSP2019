@@ -10,9 +10,14 @@
 #define MAX 20000
 #define INF 99999999
 #define TEMP_INIT 100
-#define EXEC_TIME 5
+#define TEMP_FACT 0.99
+#define TEMP_FIN 0.1
+#define MAX_ITR 200
+#define EXEC_TIME 10
+#define NGH_SIZE 5
 
 #include <bits/stdc++.h>
+#include <chrono>
 using namespace std;
 
 extern int n, length, tour[MAX];
@@ -33,7 +38,7 @@ extern void showLength(int leng);
 int tr[MAX];
 int head[MAX], adj[MAX];
 double temp;
-clock_t start_t, end_t, current_t;
+int itr;
 
 /// 距離の計算はこの関数と同等の方法で行う．
 /// 必ずしもこの関数を残しておく必要は無い．
@@ -68,98 +73,117 @@ void swap_arr(int *a, int i, int j) {
 void init_array() {
   for (int i = 0; i < n; i++) {
     tr[i] = i;
+    tour[i] = i;
   }
   for (int i = 0; i < n; i++) {
     int j = rand() % n;
     swap_arr(tr, i, j);
+    swap_arr(tour, i, j);
   }
 }
 
 int swap_cost(int i, int j) {
-  return Dis(tour[i%n], tour[j%n]) \
-    + Dis(tour[(i+1)%n], tour[(j+1)%n]) \
-    -Dis(tour[i%n], tour[(i+1)%n]) \
-    - Dis(tour[j%n], tour[(j+1)%n]);
+  return - Dis(tour[i%n], tour[(i+1)%n]) \
+         - Dis(tour[j%n], tour[(j+1)%n]) \
+         + Dis(tour[i%n], tour[j%n]) \
+         + Dis(tour[(i+1)%n], tour[(j+1)%n]);
 }
 
-double getTemplature(double t) {
-  return 0.95 * t;
+double getTemplature(double r) {
+  return TEMP_FACT * r;
 }
 
-double search_probability(double c) {
-  return exp(-c / temp) - 1;
+double calc_probability(double c, double t) {
+  return exp(-c / t);
 }
 
 void reverse(int i, int j) {
   for (int k = 0; k < (j-i) / 2; k++) {
+    swap_arr(tour, (i+1+k)%n, (j-k)%n);
     swap_arr(tr, (i+1+k)%n, (j-k)%n);
   }
 }
 
-void tsp() {
+void log_tour() {
+  printf("temp: %10f\n", temp);
+  for (int i = 0; i < n; i++) {
+    printf("%d ", tr[i]);
+  }
+  printf("\n");
+  printf("cost: %d\n", cost_evaluate());
+  showTour(tr, 10, 1);
+}
+
+void log_prob(int cost, double prob, double rand) {
+  printf("cost         %d\n", cost);
+  printf("probability: %.10f\n", prob);
+  printf("rand:        %.10f\n", rand);
+}
+
+int update(int mi) {
+  if (cost_evaluate() < mi) {
+    mi = cost_evaluate();
+    for (int i = 0; i < n; i++) {
+      tour[i] = tr[i];
+    }
+  }
+
+  return mi;
+}
+
+using clck = chrono::system_clock::time_point;
+
+bool isInTime(clck st, clck nw) {
+  return chrono::duration_cast<chrono::seconds>(nw - st).count() < EXEC_TIME;
+}
+
+void tsp(int s) {
   bool flag = true;
-  int s = 0;
-  int mi_cost = INF;
-  while (flag && (double)(current_t - start_t) / CLOCKS_PER_SEC < end_t) {
-    flag = false;
-    for (int i = s; i < s+n; i++) {
-      for (int j = i+2; j < i + n - 1; j++) {
-        int cost = swap_cost(i, j);
-        if (cost < 0) {
-          reverse(i, j);
-          s = (i+1) % n;
-          flag = true;
-          break;
-        } else {
-          double prob = search_probability((double)cost);
-          if (((double)rand()/RAND_MAX) <= prob) {
-            printf("probability: %.10f\n", prob);
-            printf("rand: %.10f\n", (double)rand()/RAND_MAX);
+  int mi_cost = INF, cnt = 0;
+  auto start_t = chrono::system_clock::now();
+  while (isInTime(start_t, chrono::system_clock::now()) && flag && temp > TEMP_FIN) {
+    for (int itr = 0; itr < MAX_ITR; itr++) {
+      flag = false;
+      for (int i = s; i < s+n; i++) {
+        for (int j = i+2; j < i+n-1; j++) {
+          if (++cnt < n * NGH_SIZE) {
+            cnt = 1;
+          }
+          int cost = swap_cost(i, j);
+          if (cost < 0) {
             reverse(i, j);
-            s = (i + 1) % n;
+            s = (i+1) % n;
             flag = true;
             break;
+          } else {
+            double prob = calc_probability((double)cost, temp);
+            double rd = (double)rand() / RAND_MAX;
+            if (rd < prob) {
+              reverse(i, j);
+              s = (i+1) % n;
+              flag = true;
+              break;
+            }
           }
+          mi_cost = update(mi_cost);
         }
+        if (flag) break;
       }
-      if (flag) break;
     }
     temp = getTemplature(temp);
-
-    if (cost_evaluate() < mi_cost) {
-      mi_cost = cost_evaluate();
-      for (int i = 0; i < n; i++) {
-        tour[i] = tr[i];
-      }
-    }
-    
-    printf("temp: %.10f\n", temp);
-    for (int i = 0; i < n; i++) {
-      printf("%d ", tr[i]);
-    }
-    printf("\n");
-    showTour(tr, 10, 1);
-
-    current_t = clock();
+//    log_tour();
   }
 }
 
 int tspSolver(void) {
   init_array();
   temp = TEMP_INIT;
-  start_t = current_t = clock();
-  end_t = start_t / CLOCKS_PER_SEC + EXEC_TIME;
-  tsp();
-  length = cost_evaluate();
-  printf("result:\n");
-  for (int i = 0; i < n; i++) {
-    printf("%d ", tour[i]);
-  }
-  printf("\n");
 
-  printf("length: %d\n", length);
-  printf("N : %d\n", n);
-  printf("\n");
+  chrono::system_clock::time_point start, end; 
+  start = chrono::system_clock::now();
+  tsp(0);
+  end = chrono::system_clock::now();
+  printf("time: %lf[ms]\n", static_cast<double>(chrono::duration_cast<chrono::microseconds>(end - start).count())); 
 
   return 1;
 }
